@@ -37,6 +37,8 @@ class CookieTokenObtainerPairView(TokenObtainPairView):
         access = serializer.validated_data["access"]
 
         response = Response({"message": "Login Erfolgrteich"})
+        
+        user = serializer.user
 
         response.set_cookie(
             key="access_token",
@@ -53,6 +55,15 @@ class CookieTokenObtainerPairView(TokenObtainPairView):
             secure=True,
             samesite="Lax"
         )
+        
+        response.data = {
+            "detail": "Login successfully!",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+        }
 
         return response
 
