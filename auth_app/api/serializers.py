@@ -1,5 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer)
+from django.contrib.auth import get_user_model
+from rest_framework.exceptions import AuthenticationFailed
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     confirmed_password = serializers.CharField(write_only=True)
@@ -30,7 +35,33 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def save(self):
         pw = self.validated_data['password']
 
-        account = User(email=self.validated_data['email'], username=self.validated_data['username'])
+        account = User(
+            email=self.validated_data['email'], username=self.validated_data['username'])
         account.set_password(pw)
         account.save()
         return account
+
+
+User = get_user_model()
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise AuthenticationFailed("Ungültige email oder Passwort")
+
+        if not user.check_password(password):
+            raise AuthenticationFailed("Ungültige email oder Passwort")
+
+        data = super().validate(
+            {"username": user.username, "password": password})
+
+        return data
