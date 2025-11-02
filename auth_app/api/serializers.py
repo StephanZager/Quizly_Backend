@@ -65,3 +65,4 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             {"username": user.username, "password": password})
 
         return data
+
